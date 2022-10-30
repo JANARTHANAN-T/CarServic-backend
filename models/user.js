@@ -8,6 +8,10 @@ const userSchema = new Schema({
   lat:String,
   long:String,
   password: String,
+  service:[{
+    type:Schema.Types.ObjectId,
+    ref:'Service'
+  }],
   joinedOn: {
     type: Date,
     default: Date.now,

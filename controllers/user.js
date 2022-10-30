@@ -1,6 +1,7 @@
 const jwt=  require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
 const User=  require('../models/user.js')
+const Service=  require('../models/service.js')
 const { json } = require('express')
  
 module.exports.signUp = async(req,res)=>{
@@ -24,7 +25,7 @@ module.exports.signUp = async(req,res)=>{
 module.exports.login = async(req,res) =>{
     const {email,password} = req.body;
     try{
-        const existinguser = await User.findOne({email})
+        const existinguser = await User.findOne({email}).populate('service')
         if(!existinguser){
             return res.status(404).json({message:"User not found..."})
         }
@@ -46,4 +47,42 @@ module.exports.getCompany = async(req,res) =>{
     }catch(err){
         res.status(500).json({msg:"Internal Server Error"})
     }
+}
+
+module.exports.getIndividual = async(req,res)=>{
+    const {id}=req.params
+    try{
+        const company= await User.findById(id)
+        res.status(200).json(company)
+    }catch(err){
+        res.status(500).json({msg:"Internal Server Error"})
+    }
+}
+
+module.exports.postService = async(req,res)=>{
+    const {id}=req.params
+    try{
+        const company= await User.findById(id)
+        const service = new Service({ ...req.body });
+        company.service.push(service._id);
+        await company.save()
+        await service.save()
+        res.status(200).json({ msg: "Success" });
+    } catch (err) {
+        res.status(500).json({ msg: "Internal Server Error" });
+     }
+}
+
+module.exports.deleteapplied =  async(req,res)=>{
+    const {s_id,c_id}=req.params
+    try{
+        const company= await User.findById(c_id)
+        await company.service.pop(s_id)
+        await Service.deleteOne({_id:s_id})
+        await company.save()
+        const existinguser= await User.findById(c_id).populate('service')
+        res.status(200).json({result:existinguser})
+    }catch (err) {
+        res.status(500).json({ msg: "Internal Server Error" });
+     }
 }
